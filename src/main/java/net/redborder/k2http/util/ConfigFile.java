@@ -21,7 +21,8 @@ public class ConfigFile {
 
     public void reload() {
         try {
-            map = (Map<String, Object>) Yaml.load(new File(configFile));
+            Map<String, Object> auxMap = (Map<String, Object>) Yaml.load(new File(configFile));
+            map = (Map<String, Object>) auxMap.get("general");
         } catch (FileNotFoundException e) {
             log.warn("Couldn't find config file: " + configFile);
             map = Collections.emptyMap();

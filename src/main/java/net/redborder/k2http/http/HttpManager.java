@@ -11,9 +11,14 @@ public class HttpManager {
     private final String endPoint = ConfigData.getEndPoint();
     private LinkedBlockingQueue<String> queue;
     private Logger log = LoggerFactory.getLogger(HttpManager.class);
+    volatile Boolean reloading = false;
 
 
     public HttpManager() {
+        init();
+    }
+
+    private void init(){
         Integer threads = ConfigData.getThreadNum();
         this.executor = Executors.newFixedThreadPool(threads);
         this.queue = new LinkedBlockingQueue(ConfigData.getMaxQueueSize());
@@ -25,7 +30,13 @@ public class HttpManager {
     public void sendMsg(String msg) {
         if (msg != null) {
             try {
-                queue.put(msg);
+                if(!reloading) {
+                    queue.put(msg);
+                } else {
+                    synchronized (reloading) {
+                        reloading.wait();
+                    }
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -33,7 +44,13 @@ public class HttpManager {
     }
 
     public void reload() {
-        Integer maxThreads = ConfigData.getThreadNum();
+        reloading = true;
+        shutdown();
+        init();
+        synchronized (reloading) {
+            reloading.notifyAll();
+        }
+        reloading = false;
     }
 
     public void shutdown() {
