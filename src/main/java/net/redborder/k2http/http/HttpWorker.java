@@ -40,12 +40,18 @@ public class HttpWorker implements Runnable {
 
                 if ((response.getStatusLine().getStatusCode() == okStatus)) {
                     retry = false;
+                    Stats.sent();
+                } else {
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
 
                 response.close();
             }
             httpclient.close();
-            Stats.sent();
         } catch (IOException e) {
             e.printStackTrace();
         }

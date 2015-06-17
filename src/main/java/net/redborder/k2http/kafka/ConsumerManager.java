@@ -4,6 +4,7 @@ import kafka.consumer.ConsumerConfig;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 import net.redborder.clusterizer.ZkTasksHandler;
+import net.redborder.k2http.http.HttpManager;
 import net.redborder.k2http.util.ConfigData;
 import net.redborder.k2http.util.Stats;
 import org.slf4j.Logger;
@@ -12,14 +13,13 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class ConsumerManager extends Thread {
     private Logger log = LoggerFactory.getLogger(ConsumerManager.class);
     private static ConsumerConnector consumer;
     private ExecutorService executor;
-    private LinkedBlockingQueue<String> queue;
     private ZkTasksHandler clusterizer;
+    private HttpManager manager;
     private Topic topic;
     private int numWorkers = 0;
     private Properties props = new Properties();
@@ -30,9 +30,8 @@ public class ConsumerManager extends Thread {
     }
 
 
-    public ConsumerManager(LinkedBlockingQueue<String> queue) {
+    public ConsumerManager(HttpManager manager) {
         status = Status.INIT;
-        this.queue = queue;
         String zk = ConfigData.getZkConnect();
         log.info("Initiate ConsumerManager using zk: " + zk);
         props.put("auto.commit.enable", "true");
@@ -43,6 +42,7 @@ public class ConsumerManager extends Thread {
         props.put("auto.commit.interval.ms", "60000");
         props.put("auto.offset.reset", "largest");
         clusterizer = new ZkTasksHandler(zk, "/rb-k2http");
+        this.manager = manager;
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
@@ -99,7 +99,7 @@ public class ConsumerManager extends Thread {
         executor = Executors.newFixedThreadPool(topic.currentThreads);
 
         for (final KafkaStream stream : streams) {
-            executor.submit(new Consumer(stream, queue));
+            executor.submit(new Consumer(stream, manager));
         }
 
         log.info("Ended rebalance.");
@@ -124,7 +124,7 @@ public class ConsumerManager extends Thread {
         int currentWorkers = clusterizer.numWorkers();
 
         if (numWorkers == 0 || numWorkers != currentWorkers) {
-            numWorkers = currentWorkers;
+            numWorkers = currentWorkers < 1 ? 1 : currentWorkers;
             recalculate = true;
         }
 

@@ -7,18 +7,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class K2Http {
     public static void main(String[] args) {
         final Logger log = LoggerFactory.getLogger(K2Http.class);
-        LinkedBlockingQueue<String> queue = new LinkedBlockingQueue<>(ConfigData.getMaxQueueSize());
 
-        final HttpManager httpManager = new HttpManager(queue);
-        final ConsumerManager consumerManager = new ConsumerManager(queue);
+        final HttpManager httpManager = new HttpManager();
+        final ConsumerManager consumerManager = new ConsumerManager(httpManager);
 
         consumerManager.start();
-        httpManager.start();
 
         log.info(ConfigData.currentConfig());
 
