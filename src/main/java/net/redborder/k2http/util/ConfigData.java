@@ -1,7 +1,7 @@
 package net.redborder.k2http.util;
 
 public class ConfigData {
-    private static final String CONFIG_FILE_PATH = "/root/k2http.yml";
+    private static final String CONFIG_FILE_PATH = "/opt/rb/etc/k2http/config.yml";
     private static final ConfigFile configFile = new ConfigFile(CONFIG_FILE_PATH);
 
     private ConfigData() {
