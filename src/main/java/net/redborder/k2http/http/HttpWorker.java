@@ -1,59 +1,85 @@
 package net.redborder.k2http.http;
 
 import net.redborder.k2http.util.Stats;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.LinkedBlockingQueue;
 
-public class HttpWorker implements Runnable {
-    private String msg;
+public class HttpWorker extends Thread {
     private String endPoint;
 
     private final Integer okStatus = 200;
-    private boolean retry = true;
+    private HttpClient client = HttpClientBuilder.create().build();
+    private LinkedBlockingQueue<String> queue;
+    private Logger log = LoggerFactory.getLogger(HttpWorker.class);
 
-    public HttpWorker(String endPoint, String msg) {
+
+    public HttpWorker(LinkedBlockingQueue<String> queue, String endPoint) {
         this.endPoint = endPoint;
-        this.msg = msg;
+        this.queue = queue;
     }
 
     @Override
     public void run() {
-        CloseableHttpClient httpclient = HttpClients.createDefault();
+        while (!Thread.currentThread().isInterrupted()) {
+            String msg;
 
+            try {
+                msg = queue.take();
+                send(msg);
+            } catch (InterruptedException e) {
+                log.info("Shutting down");
+            }
+        }
+    }
+
+    private void send(String msg) {
+        boolean retry = true;
         HttpPost httpPost = new HttpPost(endPoint);
         BasicHttpEntity entity = new BasicHttpEntity();
         entity.setContent(new ByteArrayInputStream(msg.getBytes(StandardCharsets.UTF_8)));
         entity.setContentType("application/json");
         httpPost.setEntity(entity);
+        while (retry) {
+            try {
 
-        try {
-            while (retry) {
-                CloseableHttpResponse response = httpclient.execute(httpPost);
+                HttpResponse response = client.execute(httpPost);
 
                 if ((response.getStatusLine().getStatusCode() == okStatus)) {
                     retry = false;
                     Stats.sent();
                 } else {
-                    try {
-                        Thread.sleep(3000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                    log.warn("Status: " + response.getStatusLine().getStatusCode());
+                    waitMoment();
                 }
-
-                response.close();
+                BufferedReader responseConnection = new BufferedReader(
+                        new InputStreamReader(response.getEntity().getContent()));
+                responseConnection.close();
+            } catch (ClientProtocolException e) {
+                waitMoment();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            httpclient.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        }
+    }
+
+    private void waitMoment() {
+        Stats.retries();
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
         }
     }
 }

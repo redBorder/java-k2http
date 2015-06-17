@@ -9,6 +9,7 @@ public class Stats {
     private static Logger log = LoggerFactory.getLogger(Stats.class);
     private static AtomicLong receive = new AtomicLong();
     private static AtomicLong send = new AtomicLong();
+    private static AtomicLong retries = new AtomicLong();
     private static AtomicLong lag = new AtomicLong();
 
     public static void received() {
@@ -21,9 +22,20 @@ public class Stats {
         lag.decrementAndGet();
     }
 
+    public static void retries(){
+        retries.incrementAndGet();
+    }
+
     public static void print() {
         long received = receive.getAndSet(0);
         long sent = send.getAndSet(0);
-        log.info("{\"type\":\"stats\", \"receive[msgs/s]\":"+(received / 15)+", \"send[msgs/s]\":" + (sent / 15) + ", \"lag[msgs]\":" + lag + "}" );
+        long retry = send.getAndSet(0);
+
+        log.info("{\"type\":\"stats\"," +
+                " \"receive[msgs/s]\":"+(received / 15)+"" +
+                ", \"send[msgs/s]\":" + (sent / 15) +
+                ", \"lag[msgs]\":" + lag +
+                ", \"retries\":" + (retry / 15 * 60) +
+                "}" );
     }
 }
