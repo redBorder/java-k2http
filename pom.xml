@@ -25,7 +25,7 @@
         <dependency>
             <groupId>net.redborder</groupId>
             <artifactId>clusterizer</artifactId>
-            <version>0.3.1-SNAPSHOT</version>
+            <version>0.3.1</version>
         </dependency>
 
         <!-- HttpClient -->
