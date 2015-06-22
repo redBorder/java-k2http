@@ -9,6 +9,7 @@ import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.misc.IOUtils;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -46,26 +47,29 @@ public class HttpWorker extends Thread {
     }
 
     private void send(String msg) {
-        boolean retry = true;
+        Integer retries = 1;
         HttpPost httpPost = new HttpPost(endPoint);
         BasicHttpEntity entity = new BasicHttpEntity();
         entity.setContent(new ByteArrayInputStream(msg.getBytes(StandardCharsets.UTF_8)));
         entity.setContentType("application/json");
         httpPost.setEntity(entity);
-        while (retry) {
+        while (retries <= 10) {
             try {
 
                 HttpResponse response = client.execute(httpPost);
-
-                if ((response.getStatusLine().getStatusCode() == okStatus)) {
-                    retry = false;
-                    Stats.sent();
-                } else {
-                    log.warn("Status: " + response.getStatusLine().getStatusCode());
-                    waitMoment();
-                }
                 BufferedReader responseConnection = new BufferedReader(
                         new InputStreamReader(response.getEntity().getContent()));
+
+                if ((response.getStatusLine().getStatusCode() == okStatus)) {
+                    Stats.sent();
+                    retries = okStatus;
+                } else {
+                    log.warn("#"+ retries + " STATUS: " + response.getStatusLine().getStatusCode() +
+                            "  -- MSG: " + org.apache.commons.io.IOUtils.toString(responseConnection));
+                    waitMoment();
+                    retries++;
+                }
+
                 responseConnection.close();
             } catch (ClientProtocolException e) {
                 waitMoment();
@@ -78,7 +82,7 @@ public class HttpWorker extends Thread {
     private void waitMoment() {
         Stats.retries();
         try {
-            Thread.sleep(100);
+            Thread.sleep(500);
         } catch (InterruptedException e) {
         }
     }

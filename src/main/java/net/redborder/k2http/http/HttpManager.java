@@ -57,15 +57,19 @@ public class HttpManager {
         Integer size = queue.size();
         log.info("Shutting down, queue size: " + size);
 
-        while (size>0){
+        Integer retries = 1;
+
+        while (size>0 && retries<=3){
             try {
                 Thread.sleep(5000);
                 size = queue.size();
-                log.info("Shutting down, queue size: " + size);
+                log.info("Shutting down, queue size: " + size + " retries #" + retries);
+                retries++;
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
+
         executor.shutdownNow();
         try {
             executor.awaitTermination(5, TimeUnit.SECONDS);

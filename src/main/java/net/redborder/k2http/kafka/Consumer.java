@@ -18,8 +18,9 @@ public class Consumer implements Runnable {
     public void run() {
         ConsumerIterator<byte[], byte[]> it = stream.iterator();
         while (it.hasNext()) {
-            httpManager.sendMsg(new String(it.next().message()));
             Stats.received();
+            String msg = new String(it.next().message());
+            httpManager.sendMsg(msg);
         }
     }
 }
