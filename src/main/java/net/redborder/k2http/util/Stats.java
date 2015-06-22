@@ -32,8 +32,8 @@ public class Stats {
         long retry = retries.getAndSet(0);
 
         log.info("{\"type\":\"stats\"," +
-                " \"receive[msgs/s]\":"+(received / 15)+"" +
-                ", \"send[msgs/s]\":" + (sent / 15) +
+                " \"receive[msgs/s]\":"+(received / 60)+"" +
+                ", \"send[msgs/s]\":" + (sent / 60) +
                 ", \"lag[msgs]\":" + lag +
                 ", \"retries\":" + (retry) +
                 "}" );

@@ -67,7 +67,7 @@ public class ConsumerManager extends Thread {
 
             Stats.print();
             try {
-                Thread.sleep(15000);
+                Thread.sleep(60000);
             } catch (InterruptedException e) {
             }
         }
