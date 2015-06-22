@@ -29,13 +29,13 @@ public class Stats {
     public static void print() {
         long received = receive.getAndSet(0);
         long sent = send.getAndSet(0);
-        long retry = send.getAndSet(0);
+        long retry = retries.getAndSet(0);
 
         log.info("{\"type\":\"stats\"," +
                 " \"receive[msgs/s]\":"+(received / 15)+"" +
                 ", \"send[msgs/s]\":" + (sent / 15) +
                 ", \"lag[msgs]\":" + lag +
-                ", \"retries\":" + (retry / 15 * 60) +
+                ", \"retries\":" + (retry) +
                 "}" );
     }
 }
