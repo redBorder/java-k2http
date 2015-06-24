@@ -30,11 +30,21 @@ public class Stats {
         long received = receive.getAndSet(0);
         long sent = send.getAndSet(0);
         long retry = retries.getAndSet(0);
+        long lagg = lag.get();
+        long threads = Integer.valueOf(ConfigData.getThreadNum()).longValue();
+
+        if(threads > lagg){
+            threads = lagg;
+            lagg = 0;
+        } else {
+            lagg = lagg - threads;
+        }
 
         log.info("{\"type\":\"stats\"," +
                 " \"receive[msgs/s]\":"+(received / 60)+"" +
                 ", \"send[msgs/s]\":" + (sent / 60) +
-                ", \"lag[msgs]\":" + lag +
+                ", \"lag[msgs]\":" + lagg +
+                ", \"busyThreads\":" + threads +
                 ", \"retries\":" + (retry) +
                 "}" );
     }

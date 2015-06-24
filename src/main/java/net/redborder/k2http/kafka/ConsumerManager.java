@@ -37,7 +37,7 @@ public class ConsumerManager extends Thread {
         props.put("auto.commit.enable", "true");
         props.put("zookeeper.connect", zk);
         props.put("group.id", "k2http");
-        props.put("zookeeper.session.timeout.ms", "400");
+        props.put("zookeeper.session.timeout.ms", "5000");
         props.put("zookeeper.sync.time.ms", "200");
         props.put("auto.commit.interval.ms", "60000");
         props.put("auto.offset.reset", "largest");
