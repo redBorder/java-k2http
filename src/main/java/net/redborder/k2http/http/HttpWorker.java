@@ -64,9 +64,9 @@ public class HttpWorker extends Thread {
                     Stats.sent();
                     retries = okStatus;
                 } else {
-                    log.warn("#"+ retries + " STATUS: " + response.getStatusLine().getStatusCode() +
+                    log.warn("#" + retries + " STATUS: " + response.getStatusLine().getStatusCode() +
                             "  -- MSG: " + org.apache.commons.io.IOUtils.toString(responseConnection));
-                    log.warn("JSON: " + msg);
+                    log.debug("JSON: " + msg);
                     waitMoment();
                     retries++;
                 }
@@ -78,6 +78,12 @@ public class HttpWorker extends Thread {
                 e.printStackTrace();
             }
         }
+
+        if(retries != 200){
+            Stats.drop();
+        }
+
+        httpPost.releaseConnection();
     }
 
     private void waitMoment() {
