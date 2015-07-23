@@ -28,7 +28,7 @@ public class Stats {
         lag.decrementAndGet();
     }
 
-    public static void retries(){
+    public static void retries() {
         retries.incrementAndGet();
     }
 
@@ -40,7 +40,7 @@ public class Stats {
         long dropped = drop.getAndSet(0);
         long threads = Integer.valueOf(ConfigData.getThreadNum()).longValue();
 
-        if(threads > lagg){
+        if (threads > lagg) {
             threads = lagg;
             lagg = 0;
         } else {
@@ -48,12 +48,12 @@ public class Stats {
         }
 
         log.info("{\"type\":\"stats\"," +
-                " \"receive[msgs/s]\":"+(received / 60)+"" +
+                " \"receive[msgs/s]\":" + (received / 60) + "" +
                 ", \"send[msgs/s]\":" + (sent / 60) +
                 ", \"lag[msgs]\":" + lagg +
                 ", \"busyThreads\":" + threads +
                 ", \"retries\":" + (retry) +
                 ", \"dropped\":" + (dropped) +
-                "}" );
+                "}");
     }
 }
