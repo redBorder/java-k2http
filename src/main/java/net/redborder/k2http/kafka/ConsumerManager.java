@@ -8,17 +8,16 @@ import java.util.*;
 
 public class ConsumerManager {
     private List<Topic> topics;
-    private HttpManager manager;
     private Properties props = new Properties();
     private String zk = ConfigData.getZkConnect();
+    private ZkTasksHandler clusterizer;
 
-    public ConsumerManager(HttpManager manager) {
+    public ConsumerManager() {
 
         int n_topics = ConfigData.getTopics().size();
         System.out.println("Número de topics: " + n_topics);
 
-        ZkTasksHandler clusterizer = new ZkTasksHandler(zk, "/rb-k2http");
-
+        clusterizer = new ZkTasksHandler(zk, "/rb-k2http");
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
@@ -36,7 +35,7 @@ public class ConsumerManager {
         topics = new LinkedList<>();
 
         for (int i = 0; i < n_topics; i++) {
-            topics.add(new Topic(ConfigData.getTopics().get(i), manager, props, clusterizer));
+            topics.add(new Topic(ConfigData.getTopics().get(i), props, clusterizer));
         }
     }
 
@@ -58,7 +57,7 @@ public class ConsumerManager {
         Iterator<Topic> iterator = topics.iterator();
 
         while (iterator.hasNext()) {
-            iterator.next().rebalance();
+            iterator.next().reload();
         }
     }
 

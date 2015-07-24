@@ -1,25 +1,37 @@
 package net.redborder.k2http.util;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 public class ConfigData {
-    private static final String CONFIG_FILE_PATH = "/opt/rb/etc/k2http/config.yml";
+    private static final String CONFIG_FILE_PATH = "config.yml";
     private static final ConfigFile configFile = new ConfigFile(CONFIG_FILE_PATH);
-    private static final List<String> topics = new LinkedList<>();
+    private static List<String> topicsList = new LinkedList<>();
 
     private ConfigData() {
     }
-
 
     public static String getZkConnect() {
         return configFile.getOrDefault("zk_connect", "127.0.0.1:2181");
     }
 
     public static List<String> getTopics() {
-        topics.add("default_topic_1");
-        topics.add("default_topic_2");
-        return configFile.getOrDefault("topic", topics);
+
+        String topic = configFile.getOrDefault("topic", null);
+        List<String> topics = configFile.getOrDefault("topics", null);
+
+        if (topic != null) {
+            System.out.println("\"topic\" field on config.yml is deprecated");
+        }
+
+        if (!topics.isEmpty()) {
+            topicsList = topics;
+        } else if (topic != null) {
+            topicsList.add(topic);
+        }
+
+        return topicsList;
     }
 
     public static Integer getThreadNum() {
@@ -34,12 +46,16 @@ public class ConfigData {
         return configFile.getOrDefault("endpoint", "http://127.0.0.1:8080/");
     }
 
-    public static void reload(){
+    public static String getUuid() {
+        return configFile.getOrDefault("uuid", null);
+    }
+
+    public static void reload() {
         configFile.reload();
     }
 
-    public static String currentConfig(){
-        return  "{\"type\":\"config\"," +
+    public static String currentConfig() {
+        return "{\"type\":\"config\"," +
                 " \"zkConnect\":" + getZkConnect() + "," +
                 " \"topic\":" + getTopics() + "," +
                 " \"httpThreads\":" + getThreadNum() +

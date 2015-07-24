@@ -14,7 +14,6 @@ import net.redborder.clusterizer.ZkTasksHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,10 +28,10 @@ public class Topic extends Thread {
     public int partitions = 0;
     public int currentThreads = 0;
     private int numWorkers = 0;
-    private HttpManager manager;
     private static ConsumerConnector consumer;
     private Logger log = LoggerFactory.getLogger(ConsumerManager.class);
     private ZkTasksHandler clusterizer;
+    private HttpManager httpManager;
     CuratorFramework client;
 
     private Properties props;
@@ -41,11 +40,12 @@ public class Topic extends Thread {
         INIT, ACTIVE, STOPPED;
     }
 
-    public Topic(String name, HttpManager manager, Properties props, ZkTasksHandler clusterizer) {
+    public Topic(String name, Properties props, ZkTasksHandler clusterizer) {
         this.name = name;
-        this.manager = manager;
         this.props = props;
         this.clusterizer = clusterizer;
+        httpManager = new HttpManager(name);
+
         status = Status.INIT;
         client = CuratorFrameworkFactory.newClient(ConfigData.getZkConnect(), new RetryNTimes(10, 30000));
         client.start();
@@ -158,7 +158,7 @@ public class Topic extends Thread {
         executor = Executors.newFixedThreadPool(currentThreads);
 
         for (final KafkaStream stream : streams) {
-            executor.submit(new Consumer(stream, manager));
+            executor.submit(new Consumer(stream, httpManager));
         }
 
         log.info("Ended rebalance.");
@@ -168,6 +168,11 @@ public class Topic extends Thread {
         client.close();
     }
 
+    public void reload() {
+        httpManager.reload();
+        rebalance();
+    }
+
     public void shutdown() {
         log.info("Shutdown Consumer Manager ...");
         status = Status.STOPPED;
@@ -175,6 +180,7 @@ public class Topic extends Thread {
         close();
         if (consumer != null) consumer.shutdown();
         if (executor != null) executor.shutdown();
+        httpManager.shutdown();
         log.info("Status[ " + status.name() + " ]");
     }
 }
