@@ -63,7 +63,7 @@ public class ConsumerManager {
 
     public void shutdown() {
         Iterator<Topic> iterator = topics.iterator();
-
+        clusterizer.end();
         while (iterator.hasNext()) {
             iterator.next().shutdown();
         }

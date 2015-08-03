@@ -176,7 +176,6 @@ public class Topic extends Thread {
     public void shutdown() {
         log.info("Shutdown Consumer Manager ...");
         status = Status.STOPPED;
-        clusterizer.end();
         close();
         if (consumer != null) consumer.shutdown();
         if (executor != null) executor.shutdown();
