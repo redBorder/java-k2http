@@ -29,7 +29,8 @@ app.post('/:uuid/:topic', function (req, res) {
     _.assign(info, req.body);
     info.endpoint = req.params.topic;
     info.uuid = req.params.uuid;
-    logger.debug(info);
+    logger.debug(info.endpoint);
+    logger.debug(info.uuid);
     res.end();
 });
 
