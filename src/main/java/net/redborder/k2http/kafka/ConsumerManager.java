@@ -1,7 +1,6 @@
 package net.redborder.k2http.kafka;
 
 import net.redborder.clusterizer.ZkTasksHandler;
-import net.redborder.k2http.http.HttpManager;
 import net.redborder.k2http.util.ConfigData;
 
 import java.util.*;
@@ -15,7 +14,6 @@ public class ConsumerManager {
     public ConsumerManager() {
 
         int n_topics = ConfigData.getTopics().size();
-        System.out.println("Número de topics: " + n_topics);
 
         clusterizer = new ZkTasksHandler(zk, "/rb-k2http");
         try {

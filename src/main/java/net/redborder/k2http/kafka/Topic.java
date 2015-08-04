@@ -5,6 +5,7 @@ import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 import net.redborder.k2http.http.HttpManager;
 import net.redborder.k2http.util.ConfigData;
+import net.redborder.k2http.util.Stats;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
@@ -51,7 +52,7 @@ public class Topic extends Thread {
         client.start();
         refreshPartitions();
         calculeThreads();
-        System.out.println("Creando topic: " + name);
+        log.info("Topic {} is created!", name);
     }
 
     public void run() {
@@ -68,6 +69,7 @@ public class Topic extends Thread {
                 this.rebalance();
             }
 
+            Stats.print();
             try {
                 Thread.sleep(60000);
             } catch (InterruptedException e) {
@@ -114,7 +116,7 @@ public class Topic extends Thread {
         }
 
         if (recalculate) {
-            System.out.println("Recalculando");
+            log.info("Calculating threads ...");
             Float threads = (float) getPartitions() / numWorkers;
 
             if (clusterizer.isLeader()) {
@@ -150,7 +152,7 @@ public class Topic extends Thread {
         }
 
         calculeThreads();
-        log.info("{\"type\":\"rebalancing\", \"workers\":" + numWorkers + ", \"partitions\":" + partitions + ", \"threads\":" + currentThreads + "}");
+        log.info("{\"type\":\"rebalancing\", \"topic\":\"" + name + " \", \"workers\":" + numWorkers + ", \"partitions\":" + partitions + ", \"threads\":" + currentThreads + "}");
         consumer = kafka.consumer.Consumer.createJavaConsumerConnector(new ConsumerConfig(props));
         Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(toMap());
 

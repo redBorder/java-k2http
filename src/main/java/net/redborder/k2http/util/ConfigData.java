@@ -1,13 +1,17 @@
 package net.redborder.k2http.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 public class ConfigData {
-    private static final String CONFIG_FILE_PATH = "config.yml";
+    private static final String CONFIG_FILE_PATH = "/opt/rb/etc/k2http/config.yml";
     private static final ConfigFile configFile = new ConfigFile(CONFIG_FILE_PATH);
     private static List<String> topicsList = new LinkedList<>();
+    private static Logger log = LoggerFactory.getLogger(ConfigData.class);
 
     private ConfigData() {
     }
@@ -22,7 +26,7 @@ public class ConfigData {
         List<String> topics = configFile.getOrDefault("topics", null);
 
         if (topic != null) {
-            System.out.println("\"topic\" field on config.yml is deprecated");
+            log.warn("\"topic\" field on config.yml is deprecated");
         }
 
         if (!topics.isEmpty()) {
