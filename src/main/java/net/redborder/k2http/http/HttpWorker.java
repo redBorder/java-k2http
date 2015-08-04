@@ -1,5 +1,6 @@
 package net.redborder.k2http.http;
 
+import net.redborder.k2http.util.ConfigData;
 import net.redborder.k2http.util.Stats;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -19,7 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class HttpWorker extends Thread {
-    private String endPoint;
+    private String url;
 
     private final Integer okStatus = 200;
     private HttpClient client = HttpClientBuilder.create().build();
@@ -27,8 +28,8 @@ public class HttpWorker extends Thread {
     private Logger log = LoggerFactory.getLogger(HttpWorker.class);
 
 
-    public HttpWorker(LinkedBlockingQueue<String> queue, String endPoint) {
-        this.endPoint = endPoint;
+    public HttpWorker(LinkedBlockingQueue<String> queue, String endPoint, String topic) {
+        this.url = endPoint + ConfigData.getUuid() + '/' + topic;
         this.queue = queue;
     }
 
@@ -48,7 +49,7 @@ public class HttpWorker extends Thread {
 
     private void send(String msg) {
         Integer retries = 1;
-        HttpPost httpPost = new HttpPost(endPoint);
+        HttpPost httpPost = new HttpPost(url);
         BasicHttpEntity entity = new BasicHttpEntity();
         entity.setContent(new ByteArrayInputStream(msg.getBytes(StandardCharsets.UTF_8)));
         entity.setContentType("application/json");

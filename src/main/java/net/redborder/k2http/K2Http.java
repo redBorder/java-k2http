@@ -1,6 +1,5 @@
 package net.redborder.k2http;
 
-import net.redborder.k2http.http.HttpManager;
 import net.redborder.k2http.kafka.ConsumerManager;
 import net.redborder.k2http.util.ConfigData;
 import org.slf4j.Logger;
@@ -10,10 +9,15 @@ import sun.misc.SignalHandler;
 
 public class K2Http {
     public static void main(String[] args) {
+
         final Logger log = LoggerFactory.getLogger(K2Http.class);
 
-        final HttpManager httpManager = new HttpManager();
-        final ConsumerManager consumerManager = new ConsumerManager(httpManager);
+        if (ConfigData.getUuid() == null){
+            log.error("Not valid UUID found");
+            System.exit(1);
+        }
+
+        final ConsumerManager consumerManager = new ConsumerManager();
 
         consumerManager.start();
 
@@ -23,7 +27,6 @@ public class K2Http {
             public void run() {
                 log.info("Exiting...");
                 consumerManager.shutdown();
-                httpManager.shutdown();
             }
         });
 
@@ -34,7 +37,6 @@ public class K2Http {
                 // Reload the config file
                 ConfigData.reload();
                 consumerManager.reload();
-                httpManager.reload();
                 log.info("Reload finished!");
                 log.info(ConfigData.currentConfig());
             }

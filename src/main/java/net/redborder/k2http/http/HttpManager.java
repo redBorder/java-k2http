@@ -11,26 +11,28 @@ public class HttpManager {
     private final String endPoint = ConfigData.getEndPoint();
     private LinkedBlockingQueue<String> queue;
     private Logger log = LoggerFactory.getLogger(HttpManager.class);
+    private String topic;
     volatile Boolean reloading = false;
 
 
-    public HttpManager() {
+    public HttpManager(String topic) {
+        this.topic = topic;
         init();
     }
 
-    private void init(){
+    private void init() {
         Integer threads = ConfigData.getThreadNum();
         this.executor = Executors.newFixedThreadPool(threads);
         this.queue = new LinkedBlockingQueue(ConfigData.getMaxQueueSize());
 
         for (Integer i = 0; i < threads; i++)
-            executor.submit(new HttpWorker(queue, endPoint));
+            executor.submit(new HttpWorker(queue, endPoint, topic));
     }
 
     public void sendMsg(String msg) {
         if (msg != null) {
             try {
-                if(!reloading) {
+                if (!reloading) {
                     queue.put(msg);
                 } else {
                     synchronized (reloading) {
@@ -59,7 +61,7 @@ public class HttpManager {
 
         Integer retries = 1;
 
-        while (size>0 && retries<=3){
+        while (size > 0 && retries <= 3) {
             try {
                 Thread.sleep(5000);
                 size = queue.size();

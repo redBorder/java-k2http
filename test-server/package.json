@@ -1,0 +1,17 @@
+{
+  "name": "rb_k2http_testServer",
+  "version": "0.0.1",
+  "description": "Redborder k2http test server",
+  "author": {
+    "name": "Diego Fenández",
+    "email": "bigomby@gmail.com"
+  },
+  "main": "./server.js",
+  "dependencies": {
+    "express": "~4.13.1",
+    "body-parser": "~1.13.2",
+    "winston": "~1.0.1",
+    "lodash": "~3.10.0"
+  },
+  "devDependencies": {}
+}
