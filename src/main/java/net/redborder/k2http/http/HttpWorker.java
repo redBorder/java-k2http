@@ -7,12 +7,11 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.TrustStrategy;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContexts;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContexts;
+import org.apache.http.ssl.TrustStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +22,7 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class HttpWorker extends Thread {
@@ -36,7 +36,7 @@ public class HttpWorker extends Thread {
 
 
     public HttpWorker(LinkedBlockingQueue<String> queue, String endPoint, String topic) {
-        this.url = endPoint + ConfigData.getUuid() + '/' + topic;
+        this.url = endPoint + "/" + ConfigData.getUuid() + '/' + topic;
         this.queue = queue;
         try {
             init();
@@ -56,7 +56,13 @@ public class HttpWorker extends Thread {
     private void init() throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
 
         SSLContext sslcontext = SSLContexts.custom()
-                .loadTrustMaterial(new File("/opt/rb/etc/nmspd/aes.keystore"), "r3dB0rder".toCharArray(), new TrustSelfSignedStrategy())
+                .loadTrustMaterial(null, new TrustStrategy(){
+                    public boolean isTrusted(
+                            final X509Certificate[] chain, String authType) throws CertificateException {
+                        // Oh, I am easy...
+                        return true;
+                    }
+                })
                 .build();
 
         SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
