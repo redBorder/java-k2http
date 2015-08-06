@@ -6,23 +6,30 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustStrategy;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContexts;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.misc.IOUtils;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import javax.net.ssl.SSLContext;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class HttpWorker extends Thread {
     private String url;
 
     private final Integer okStatus = 200;
+
     private HttpClient client = HttpClientBuilder.create().build();
     private LinkedBlockingQueue<String> queue;
     private Logger log = LoggerFactory.getLogger(HttpWorker.class);
@@ -31,6 +38,34 @@ public class HttpWorker extends Thread {
     public HttpWorker(LinkedBlockingQueue<String> queue, String endPoint, String topic) {
         this.url = endPoint + ConfigData.getUuid() + '/' + topic;
         this.queue = queue;
+        try {
+            init();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void init() throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
+
+        SSLContext sslcontext = SSLContexts.custom()
+                .loadTrustMaterial(new File("/opt/rb/etc/nmspd/aes.keystore"), "r3dB0rder".toCharArray(), new TrustSelfSignedStrategy())
+                .build();
+
+        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
+                sslcontext,
+                new String[] { "TLSv1" },
+                null,
+                SSLConnectionSocketFactory.getDefaultHostnameVerifier());
+
+        client = HttpClients.custom().setSSLSocketFactory(sslsf).build();
     }
 
     @Override
@@ -80,7 +115,7 @@ public class HttpWorker extends Thread {
             }
         }
 
-        if(retries != 200){
+        if (retries != 200) {
             Stats.drop();
         }
 
