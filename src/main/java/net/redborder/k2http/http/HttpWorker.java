@@ -38,8 +38,15 @@ public class HttpWorker extends Thread {
 
 
     public HttpWorker(LinkedBlockingQueue<String> queue, String endPoint, String topic) {
-        this.url = endPoint + "/" + ConfigData.getUuid() + '/' + topic;
+
+        if(ConfigData.isLegacyMode()) {
+            this.url = endPoint;
+        } else {
+            this.url = endPoint + "/" + ConfigData.getUuid() + '/' + topic;
+        }
+
         this.queue = queue;
+
         try {
             init();
         } catch (CertificateException e) {
