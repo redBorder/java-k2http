@@ -50,6 +50,12 @@ app.post('/:uuid/:topic', function (req, res) {
     res.end();
 });
 
+// Escucho mensajes a la API
+app.post('/', function (req, res) {
+    logger.debug(req.body);
+    res.end();
+});
+
 // Inicio la escucha
 httpServer.listen(httpPort);
 httpsServer.listen(httpsPort);
