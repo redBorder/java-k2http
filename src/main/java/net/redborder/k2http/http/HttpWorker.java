@@ -15,7 +15,9 @@ import org.apache.http.ssl.TrustStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
@@ -30,7 +32,7 @@ public class HttpWorker extends Thread {
 
     private final Integer okStatus = 200;
 
-    private HttpClient client = HttpClientBuilder.create().build();
+    private HttpClient client;
     private LinkedBlockingQueue<String> queue;
     private Logger log = LoggerFactory.getLogger(HttpWorker.class);
 
@@ -55,23 +57,31 @@ public class HttpWorker extends Thread {
 
     private void init() throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
 
-        SSLContext sslcontext = SSLContexts.custom()
-                .loadTrustMaterial(null, new TrustStrategy(){
-                    public boolean isTrusted(
-                            final X509Certificate[] chain, String authType) throws CertificateException {
-                        // Oh, I am easy...
-                        return true;
-                    }
-                })
-                .build();
+        if(ConfigData.getSecurity()) {
+            SSLContext sslcontext = SSLContexts.custom()
+                    .loadTrustMaterial(null, new TrustStrategy() {
+                        public boolean isTrusted(
+                                final X509Certificate[] chain, String authType) throws CertificateException {
+                            // Oh, I am easy...
+                            return true;
+                        }
+                    })
+                    .build();
 
-        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
-                sslcontext,
-                new String[] { "TLSv1" },
-                null,
-                SSLConnectionSocketFactory.getDefaultHostnameVerifier());
+            SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
+                    sslcontext,
+                    new String[]{"TLSv1"},
+                    null,
+                    new HostnameVerifier() {
+                        public boolean verify(final String arg0, final SSLSession arg1) {
+                            return true;
+                        }
+                    });
 
-        client = HttpClients.custom().setSSLSocketFactory(sslsf).build();
+            client = HttpClients.custom().setSSLSocketFactory(sslsf).build();
+        } else {
+            client = HttpClientBuilder.create().build();
+        }
     }
 
     @Override

@@ -54,6 +54,11 @@ public class ConfigData {
         return configFile.getOrDefault("uuid", null);
     }
 
+    public static Boolean getSecurity() {
+        return configFile.getOrDefault("insecure", false);
+    }
+
+
     public static void reload() {
         configFile.reload();
     }
