@@ -12,7 +12,7 @@ public class K2Http {
 
         final Logger log = LoggerFactory.getLogger(K2Http.class);
 
-        if (ConfigData.getUuid() == null){
+        if (!ConfigData.isLegacyMode() && ConfigData.getUuid() == null){
             log.error("Not valid UUID found");
             System.exit(1);
         }

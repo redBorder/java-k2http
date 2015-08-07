@@ -1,13 +1,16 @@
 'use strict';
 
-var http = require('http');
-var winston = require('winston');
 var express = require('express');
+var app = express();
 var bodyParser = require('body-parser');
-var _ = require('lodash');
+var winston = require('winston');
+var fs = require('fs');
+var https = require('https');
+var http = require('http');
 
-var logger = new(winston.Logger)({
-    transports: [new(winston.transports.Console)({
+// Instancio el logger
+var logger = new (winston.Logger)({
+    transports: [new (winston.transports.Console)({
         level: 'debug',
         prettyPrint: true,
         colorize: true,
@@ -15,24 +18,52 @@ var logger = new(winston.Logger)({
     })]
 });
 
-var app = express();
+// Puertos de escucha
+var httpPort = process.env.HTTP_PORT || 8080;
+var httpsPort = process.env.HTTPS_PORT || 4433;
 
+// Certificados
+var privateKey = fs.readFileSync('localhost.key', 'utf8');
+var certificate = fs.readFileSync('localhost.crt', 'utf8');
+
+// Instacio los servidores HTTP y HTTPS
+var httpServer = http.createServer(app);
+
+var httpsServer = https.createServer({
+    key: privateKey,
+    cert: certificate,
+    passphrase: '0000'
+}, app);
+
+// Configure el middleware para parseo de JSON
 app.use(bodyParser.urlencoded({
     extended: true
 }));
+
 app.use(bodyParser.json());
 
-var port = process.env.PORT || 8080;
-
+// Escucho mensajes a la API
 app.post('/:uuid/:topic', function (req, res) {
-    var info = {};
-    _.assign(info, req.body);
-    info.endpoint = req.params.topic;
-    info.uuid = req.params.uuid;
-    logger.debug(info.endpoint);
-    logger.debug(info.uuid);
+    logger.debug('TOPIC: ' + req.params.topic);
+    logger.debug('UUID: ' + req.params.uuid);
+    logger.debug(req.body);
     res.end();
 });
 
-app.listen(port);
-logger.info('Servidor iniciado en: ' + port + '/TCP');
+// Escucho mensajes a la API
+app.post('/', function (req, res) {
+    logger.debug(req.body);
+    res.end();
+});
+
+// Inicio la escucha
+httpServer.listen(httpPort);
+httpsServer.listen(httpsPort);
+
+// Muestro la info
+logger.info('Servidor HTTP iniciado en: ' + httpPort + '/TCP');
+logger.info('Servidor HTTPS iniciado en: ' + httpsPort + '/TCP');
+
+
+
+
