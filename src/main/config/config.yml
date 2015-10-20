@@ -1,0 +1,8 @@
+general:
+  zk_connect: 'rbmanager.redborder.cluster:2181'
+  topics: ['rb_flow']
+  httpThreadsNum: 1
+  maxQueueSize: 1000
+  endpoint: 'http://10.0.150.8:7980/rbdata'
+  insecure: true
+  uuid: 'xxx'

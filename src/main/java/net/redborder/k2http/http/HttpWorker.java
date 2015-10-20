@@ -39,7 +39,7 @@ public class HttpWorker extends Thread {
 
     public HttpWorker(LinkedBlockingQueue<String> queue, String endPoint, String topic) {
 
-        if(ConfigData.isLegacyMode()) {
+        if (ConfigData.isLegacyMode()) {
             this.url = endPoint;
         } else {
             this.url = endPoint + "/" + ConfigData.getUuid() + '/' + topic;
@@ -64,7 +64,7 @@ public class HttpWorker extends Thread {
 
     private void init() throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
 
-        if(ConfigData.getSecurity()) {
+        if (ConfigData.getSecurity()) {
             SSLContext sslcontext = SSLContexts.custom()
                     .loadTrustMaterial(null, new TrustStrategy() {
                         public boolean isTrusted(
@@ -108,12 +108,14 @@ public class HttpWorker extends Thread {
     private void send(String msg) {
         Integer retries = 1;
         HttpPost httpPost = new HttpPost(url);
-        BasicHttpEntity entity = new BasicHttpEntity();
-        entity.setContent(new ByteArrayInputStream(msg.getBytes(StandardCharsets.UTF_8)));
-        entity.setContentType("application/json");
-        httpPost.setEntity(entity);
+
         while (retries <= 10) {
             try {
+                BasicHttpEntity entity = new BasicHttpEntity();
+                entity.setContent(new ByteArrayInputStream(msg.getBytes(StandardCharsets.UTF_8)));
+                entity.setContentLength(msg.length());
+                entity.setContentType("application/json");
+                httpPost.setEntity(entity);
 
                 HttpResponse response = client.execute(httpPost);
                 BufferedReader responseConnection = new BufferedReader(
@@ -133,6 +135,7 @@ public class HttpWorker extends Thread {
                 responseConnection.close();
             } catch (ClientProtocolException e) {
                 waitMoment();
+                log.error("Error: ", e);
             } catch (IOException e) {
                 e.printStackTrace();
             }
