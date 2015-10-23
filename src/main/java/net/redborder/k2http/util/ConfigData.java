@@ -3,8 +3,10 @@ package net.redborder.k2http.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class ConfigData {
     private static final String CONFIG_FILE_PATH = "/opt/rb/etc/k2http/config.yml";
@@ -68,6 +70,10 @@ public class ConfigData {
 
     public static Boolean getSecurity() {
         return configFile.getOrDefault("insecure", false);
+    }
+
+    public static List<Map<String, Object>> getFilters(){
+        return configFile.getOrDefault("filters", new ArrayList<Map<String, Object>>());
     }
 
     public static void reload() {
