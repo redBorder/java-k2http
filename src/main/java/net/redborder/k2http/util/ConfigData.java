@@ -65,7 +65,8 @@ public class ConfigData {
     }
 
     public static String getUuid() {
-        return configFile.getOrDefault("uuid", null);
+        String uuid = configFile.getOrDefault("uuid", null);
+        return  uuid == null ? "" : uuid + "/";
     }
 
     public static Boolean getSecurity() {
