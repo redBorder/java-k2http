@@ -36,29 +36,36 @@ public class Consumer implements Runnable {
                 e.printStackTrace();
             }
 
-            if(msg != null) {
+            if (msg != null) {
                 boolean send = true;
                 try {
                     Map<String, Object> message = mapper.readValue(msg, Map.class);
                     Map<String, Object> enrichment = (Map<String, Object>) message.get("enrichment");
 
-                    if(enrichment != null){
-                        for(Map<String, Object> filter : filters){
-                            for(Map.Entry<String, Object> filterEntry : filter.entrySet()){
-                                String key = filterEntry.getKey();
-                                Object value = enrichment.get(key);
+                    for (Map<String, Object> filter : filters) {
+                        for (Map.Entry<String, Object> filterEntry : filter.entrySet()) {
+                            String key = filterEntry.getKey();
+                            Object value = null;
 
-                                if(value == null || !value.equals(filterEntry.getValue())){
-                                    send = false;
-                                }
+                            if(enrichment != null) {
+                                 value = enrichment.get(key);
+                            }
+
+                            if(value == null) {
+                                value = message.get(key);
+                            }
+
+                            if (value == null || !value.equals(filterEntry.getValue())) {
+                                send = false;
                             }
                         }
                     }
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
 
-                if(send) {
+                if (send) {
                     httpManager.sendMsg(msg);
                 }
             }
