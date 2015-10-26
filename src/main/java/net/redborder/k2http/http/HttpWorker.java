@@ -126,7 +126,7 @@ public class HttpWorker extends Thread {
                     retries = okStatus;
                 } else {
                     log.warn("#" + retries + " STATUS: " + response.getStatusLine().getStatusCode() +
-                            "  -- MSG: " + org.apache.commons.io.IOUtils.toString(responseConnection));
+                            "  -- URL: " + url +" MSG: " + org.apache.commons.io.IOUtils.toString(responseConnection));
                     log.debug("JSON: " + msg);
                     waitMoment();
                     retries++;
