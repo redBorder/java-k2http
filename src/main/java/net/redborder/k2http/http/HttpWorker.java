@@ -42,7 +42,7 @@ public class HttpWorker extends Thread {
         if (ConfigData.isLegacyMode()) {
             this.url = endPoint;
         } else {
-            this.url = endPoint + "/" + ConfigData.getUuid() + '/' + topic;
+            this.url = endPoint + "/" + ConfigData.getUuid()  + topic;
         }
 
         this.queue = queue;
