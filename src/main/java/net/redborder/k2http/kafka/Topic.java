@@ -160,7 +160,7 @@ public class Topic extends Thread {
         executor = Executors.newFixedThreadPool(currentThreads);
 
         for (final KafkaStream stream : streams) {
-            executor.submit(new Consumer(stream, httpManager));
+            executor.submit(new Consumer(name, stream, httpManager));
         }
 
         log.info("Ended rebalance.");

@@ -6,6 +6,8 @@ import kafka.consumer.KafkaStream;
 import net.redborder.k2http.http.HttpManager;
 import net.redborder.k2http.util.ConfigData;
 import net.redborder.k2http.util.Stats;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -16,12 +18,16 @@ public class Consumer implements Runnable {
     private KafkaStream stream;
     private HttpManager httpManager;
     private ObjectMapper mapper;
-    private List<Map<String, Object>> filters = ConfigData.getFilters();
+    private List<Map<String, Object>> filters;
+    private Boolean filersEnabled = ConfigData.getFilterEnabled();
+    private Logger log = LoggerFactory.getLogger(Consumer.class);
 
-    public Consumer(KafkaStream stream, HttpManager httpManager) {
+    public Consumer(String topicName, KafkaStream stream, HttpManager httpManager) {
         this.stream = stream;
         this.httpManager = httpManager;
         this.mapper = new ObjectMapper();
+        this.filters = (List<Map<String, Object>>) ConfigData.getFilters().get(topicName);
+
     }
 
     @Override
@@ -37,34 +43,51 @@ public class Consumer implements Runnable {
             }
 
             if (msg != null) {
-                boolean send = true;
-                try {
-                    Map<String, Object> message = mapper.readValue(msg, Map.class);
-                    Map<String, Object> enrichment = (Map<String, Object>) message.get("enrichment");
+                boolean send = false;
 
-                    for (Map<String, Object> filter : filters) {
-                        for (Map.Entry<String, Object> filterEntry : filter.entrySet()) {
-                            String key = filterEntry.getKey();
-                            Object value = null;
+                if(filersEnabled && filters != null) {
+                    try {
+                        Map<String, Object> message = mapper.readValue(msg, Map.class);
+                        Map<String, Object> enrichment = (Map<String, Object>) message.get("enrichment");
 
-                            if(enrichment != null) {
-                                 value = enrichment.get(key);
+                        for (Map<String, Object> filter : filters) {
+                            StringBuilder compare = new StringBuilder();
+                            StringBuilder data = new StringBuilder();
+
+                            for (Map.Entry<String, Object> filterEntry : filter.entrySet()) {
+                                String key = filterEntry.getKey();
+                                Object value = null;
+
+                                if (enrichment != null) {
+                                    value = enrichment.get(key);
+                                }
+
+                                if (value == null) {
+                                    value = message.get(key);
+                                }
+                                compare.append(filterEntry.getValue());
+                                data.append(value);
                             }
 
-                            if(value == null) {
-                                value = message.get(key);
+                            log.debug("{} - {}",compare, data);
+                            if(compare.toString().equals(data.toString())){
+                                send = true;
                             }
 
-                            if (value == null || !value.equals(filterEntry.getValue())) {
-                                send = false;
+                            if(send){
+                                break;
                             }
                         }
-                    }
 
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        send = false;
+                    }
+                } else if(!filersEnabled){
+                    send = true;
                 }
 
+                log.debug("Send: {}", send);
                 if (send) {
                     httpManager.sendMsg(msg);
                 }
