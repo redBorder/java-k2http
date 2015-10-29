@@ -27,7 +27,7 @@ public class ConsumerManager {
         props.put("group.id", "k2http10");
         props.put("zookeeper.session.timeout.ms", "5000");
         props.put("zookeeper.sync.time.ms", "200");
-        props.put("auto.commit.interval.ms", "60000");
+        props.put("auto.commit.interval.ms", "500");
         props.put("auto.offset.reset", "largest");
 
         topics = new LinkedList<>();
