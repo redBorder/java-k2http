@@ -113,7 +113,7 @@ public class HttpWorker extends Thread {
             try {
                 BasicHttpEntity entity = new BasicHttpEntity();
                 entity.setContent(new ByteArrayInputStream(msg.getBytes(StandardCharsets.UTF_8)));
-                entity.setContentLength(msg.length());
+                //entity.setContentLength(msg.length());
                 entity.setContentType("application/json");
                 httpPost.setEntity(entity);
 

@@ -12,10 +12,16 @@ public class Stats {
     private static AtomicLong retries = new AtomicLong();
     private static AtomicLong drop = new AtomicLong();
     private static AtomicLong lag = new AtomicLong();
+    private static AtomicLong filter = new AtomicLong();
 
     public static void received() {
         receive.incrementAndGet();
         lag.incrementAndGet();
+    }
+
+    public static void filtered() {
+        filter.incrementAndGet();
+        lag.decrementAndGet();
     }
 
     public static void sent() {
@@ -38,6 +44,7 @@ public class Stats {
         long retry = retries.getAndSet(0);
         long lagg = lag.get();
         long dropped = drop.getAndSet(0);
+        long filtered = filter.getAndSet(0);
         long threads = Integer.valueOf(ConfigData.getThreadNum()).longValue();
 
         if (threads > lagg) {
@@ -54,6 +61,7 @@ public class Stats {
                 ", \"busyThreads\":" + threads +
                 ", \"retries\":" + (retry) +
                 ", \"dropped\":" + (dropped) +
+                ", \"filtered\":" + (filtered) +
                 "}");
     }
 }

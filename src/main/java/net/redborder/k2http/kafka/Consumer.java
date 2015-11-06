@@ -88,8 +88,11 @@ public class Consumer implements Runnable {
                 }
 
                 log.debug("Send: {}", send);
+
                 if (send) {
                     httpManager.sendMsg(msg);
+                } else {
+                    Stats.filtered();
                 }
             }
         }
