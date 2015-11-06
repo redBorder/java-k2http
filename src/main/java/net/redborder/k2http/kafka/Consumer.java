@@ -64,6 +64,14 @@ public class Consumer implements Runnable {
 
                                 if (value == null) {
                                     value = message.get(key);
+
+                                    if(value == null && message.containsKey("notifications")){
+                                        List<Map<String, Object>> mList = (List<Map<String, Object>>) message.get("notifications");
+                                        Map<String, Object> m = mList.get(0);
+                                        if(m != null){
+                                            value = m.get(key);
+                                        }
+                                    }
                                 }
                                 compare.append(filterEntry.getValue());
                                 data.append(value);
