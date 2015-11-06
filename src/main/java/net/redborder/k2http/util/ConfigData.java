@@ -74,6 +74,10 @@ public class ConfigData {
         return configFile.getOrDefault("filters_enable", false);
     }
 
+    public static Map<List<String>, Object> getFiltersMode(){
+        return configFile.getOrDefault("filters_mode", new HashMap<List<String>, Object>());
+    }
+
     public static Map<String, Object> getFilters(){
         return configFile.getOrDefault("filters", new HashMap<String, Object>());
     }
