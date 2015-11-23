@@ -130,13 +130,13 @@ public class HttpWorker extends Thread {
                     log.warn("#" + retries + " STATUS: " + response.getStatusLine().getStatusCode() +
                             "  -- URL: " + url + " MSG: " + org.apache.commons.io.IOUtils.toString(responseConnection));
                     log.debug("JSON: " + msg);
-                    waitMoment(500L);
+                    waitMoment(5000L);
                     retries++;
                 }
 
                 responseConnection.close();
             } catch (ClientProtocolException e) {
-                waitMoment(500L);
+                waitMoment(5000L);
                 retries++;
                 log.error("Error: {}, retry again #{}", e.getMessage(), retries);
             } catch (SSLHandshakeException e) {
