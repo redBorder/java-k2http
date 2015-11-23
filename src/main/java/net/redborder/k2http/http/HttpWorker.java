@@ -14,9 +14,11 @@ import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.security.validator.ValidatorException;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSession;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -42,7 +44,7 @@ public class HttpWorker extends Thread {
         if (ConfigData.isLegacyMode()) {
             this.url = endPoint;
         } else {
-            this.url = endPoint + "/" + ConfigData.getUuid()  + topic;
+            this.url = endPoint + "/" + ConfigData.getUuid() + topic;
         }
 
         this.queue = queue;
@@ -126,16 +128,21 @@ public class HttpWorker extends Thread {
                     retries = okStatus;
                 } else {
                     log.warn("#" + retries + " STATUS: " + response.getStatusLine().getStatusCode() +
-                            "  -- URL: " + url +" MSG: " + org.apache.commons.io.IOUtils.toString(responseConnection));
+                            "  -- URL: " + url + " MSG: " + org.apache.commons.io.IOUtils.toString(responseConnection));
                     log.debug("JSON: " + msg);
-                    waitMoment();
+                    waitMoment(500L);
                     retries++;
                 }
 
                 responseConnection.close();
             } catch (ClientProtocolException e) {
-                waitMoment();
-                log.error("Error: ", e);
+                waitMoment(500L);
+                retries++;
+                log.error("Error: {}, retry again #{}", e.getMessage(), retries);
+            } catch (SSLHandshakeException e) {
+                log.error("Error: {}, retry again #{}", e.getMessage(), retries);
+                waitMoment(60000L);
+                retries++;
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -148,10 +155,10 @@ public class HttpWorker extends Thread {
         httpPost.releaseConnection();
     }
 
-    private void waitMoment() {
+    private void waitMoment(Long sleep) {
         Stats.retries();
         try {
-            Thread.sleep(500);
+            Thread.sleep(sleep);
         } catch (InterruptedException e) {
         }
     }
