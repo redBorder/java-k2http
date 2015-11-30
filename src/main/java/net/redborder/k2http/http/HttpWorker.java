@@ -3,6 +3,7 @@ package net.redborder.k2http.http;
 import net.redborder.k2http.util.ConfigData;
 import net.redborder.k2http.util.Stats;
 import org.apache.http.HttpResponse;
+import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -139,11 +140,11 @@ public class HttpWorker extends Thread {
                 waitMoment(5000L);
                 retries++;
                 log.error("Error: {}, retry again #{}", e.getMessage(), retries);
-            } catch (SSLHandshakeException e) {
+            } catch (SSLHandshakeException | NoHttpResponseException e) {
                 log.error("Error: {}, retry again #{}", e.getMessage(), retries);
                 waitMoment(60000L);
                 retries++;
-            } catch (IOException e) {
+            } catch (IOException e){
                 e.printStackTrace();
             }
         }
