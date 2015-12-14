@@ -124,15 +124,22 @@ public class HttpWorker extends Thread {
                 BufferedReader responseConnection = new BufferedReader(
                         new InputStreamReader(response.getEntity().getContent()));
 
-                if ((response.getStatusLine().getStatusCode() == okStatus)) {
+                int statusCode = response.getStatusLine().getStatusCode();
+
+                if ((statusCode == okStatus)) {
                     Stats.sent();
                     retries = okStatus;
                 } else {
                     log.warn("#" + retries + " STATUS: " + response.getStatusLine().getStatusCode() +
                             "  -- URL: " + url + " MSG: " + org.apache.commons.io.IOUtils.toString(responseConnection));
                     log.debug("JSON: " + msg);
-                    waitMoment(5000L);
-                    retries++;
+
+                    if(statusCode == 400){
+                        retries = 15;
+                    } else {
+                        waitMoment(5000L);
+                        retries++;
+                    }
                 }
 
                 responseConnection.close();
