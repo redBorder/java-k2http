@@ -4,11 +4,11 @@
 
     <groupId>net.redborder</groupId>
     <artifactId>k2http</artifactId>
-    <version>1.4.4-SNAPSHOT</version>
+    <version>1.5.0</version>
 
     <scm>
         <developerConnection>scm:git:git@gitlab.redborder.lan:bigdata/k2http.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>k2http-1.5.0</tag>
     </scm>
 
     <repositories>
