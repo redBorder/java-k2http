@@ -11,17 +11,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Consumer implements Runnable {
     private KafkaStream stream;
     private HttpManager httpManager;
     private ObjectMapper mapper;
     private List<Map<String, Object>> filters;
-    private List<String> filtersMode;
+    private Map<String, Object> filtersMode;
 
     private Boolean filersEnabled = ConfigData.getFilterEnabled();
     private Logger log = LoggerFactory.getLogger(Consumer.class);
@@ -31,10 +28,11 @@ public class Consumer implements Runnable {
         this.httpManager = httpManager;
         this.mapper = new ObjectMapper();
         this.filters = (List<Map<String, Object>>) ConfigData.getFilters().get(topicName);
-        this.filtersMode = (List<String>) ConfigData.getFiltersMode().get(topicName);
+        this.filtersMode = (Map<String, Object>) ConfigData.getFiltersMode().get(topicName);
 
         if (filtersMode == null) {
-            filtersMode = Collections.singletonList("base");
+            filtersMode = new HashMap<>();
+            filtersMode.put("base", null);
         }
 
     }
@@ -54,16 +52,16 @@ public class Consumer implements Runnable {
             if (msg != null) {
                 boolean send = false;
 
-                if (filersEnabled && filters != null) {
-                    Map<String, Object> message = null;
+                if (filersEnabled) {
+                    Map<String, Object> message;
                     try {
                         message = mapper.readValue(msg, Map.class);
 
-                        if (filtersMode.contains("base")) {
+                        if (filtersMode.containsKey("base")) {
                             send = baseFilter(message);
                         }
 
-                        if (!send && filtersMode.contains("mse10")) {
+                        if (!send && filtersMode.containsKey("mse10")) {
                             send = mse10Filter(message);
                         }
                     } catch (IOException e) {
@@ -87,20 +85,39 @@ public class Consumer implements Runnable {
 
     private boolean mse10Filter(Map<String, Object> message) {
         boolean send = false;
-        boolean association = false;
-        Map<String, Object> m = null;
+        Map<String, Object> m;
 
         if (message.containsKey("notifications")) {
+            boolean association = false;
+
             List<Map<String, Object>> mList = (List<Map<String, Object>>) message.get("notifications");
             m = mList.get(0);
             String mType = (String) m.get("notificationType");
             if (mType != null && mType.equals("association")) {
                 association = true;
             }
-        }
 
-        if (!association && m != null) {
-            send = baseFilter(m);
+            if (!association && m != null) {
+                Map<String, List<String>> sensors = (Map<String, List<String>>) filtersMode.get("mse10");
+                if (sensors != null) {
+                    String sensorUUID = (String) m.get("sensor_uuid");
+
+                    if (sensorUUID != null) {
+                        if (sensors.keySet().contains(sensorUUID)) {
+                            List<String> subscriptionNames = sensors.get(sensorUUID);
+                            String subscriptionName = (String) m.get("subscriptionName");
+
+                            if (subscriptionNames != null) {
+                                if (subscriptionNames.contains(subscriptionName)) {
+                                    send = true;
+                                }
+                            } else {
+                                send = true;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         return send;
@@ -108,35 +125,36 @@ public class Consumer implements Runnable {
 
     private boolean baseFilter(Map<String, Object> message) {
         boolean send = false;
+        if (filters != null) {
+            Map<String, Object> enrichment = (Map<String, Object>) message.get("enrichment");
 
-        Map<String, Object> enrichment = (Map<String, Object>) message.get("enrichment");
+            for (Map<String, Object> filter : filters) {
+                StringBuilder compare = new StringBuilder();
+                StringBuilder data = new StringBuilder();
 
-        for (Map<String, Object> filter : filters) {
-            StringBuilder compare = new StringBuilder();
-            StringBuilder data = new StringBuilder();
+                for (Map.Entry<String, Object> filterEntry : filter.entrySet()) {
+                    String key = filterEntry.getKey();
+                    Object value = null;
 
-            for (Map.Entry<String, Object> filterEntry : filter.entrySet()) {
-                String key = filterEntry.getKey();
-                Object value = null;
+                    if (enrichment != null) {
+                        value = enrichment.get(key);
+                    }
 
-                if (enrichment != null) {
-                    value = enrichment.get(key);
+                    if (value == null) {
+                        value = message.get(key);
+                    }
+                    compare.append(filterEntry.getValue());
+                    data.append(value);
                 }
 
-                if (value == null) {
-                    value = message.get(key);
+                log.debug("{} - {}", compare, data);
+                if (compare.toString().equals(data.toString())) {
+                    send = true;
                 }
-                compare.append(filterEntry.getValue());
-                data.append(value);
-            }
 
-            log.debug("{} - {}", compare, data);
-            if (compare.toString().equals(data.toString())) {
-                send = true;
-            }
-
-            if (send) {
-                break;
+                if (send) {
+                    break;
+                }
             }
         }
 
