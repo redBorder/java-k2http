@@ -80,7 +80,7 @@ public class HttpWorker extends Thread {
 
             SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
                     sslcontext,
-                    new String[]{"TLSv1"},
+                    new String[]{"TLSv1.2", "TLSv1.1", "TLSv1"},
                     null,
                     new HostnameVerifier() {
                         public boolean verify(final String arg0, final SSLSession arg1) {
